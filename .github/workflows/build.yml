@@ -1,0 +1,95 @@
+name: Go Build and Release
+
+env:
+  COMMAND_NAME: git-raycast
+
+on:
+  push:
+
+  workflow_dispatch:
+    inputs:
+      tag-name:
+        description: 'The git tag name to bump the formula to'
+        required: true
+
+jobs:
+  build:
+    name: Build
+    runs-on: macos-latest
+    outputs:
+      version: ${{ steps.version.outputs.VERSION }}
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: 'go.mod'
+
+      - name: Get dependencies
+        run: go mod download
+
+      - name: Get version of the project
+        id: version
+        # If have tag, than use it like `1.0.0`, not `v1.0.0`,
+        # otherwise use short commit hash
+        run: |
+          VERSION=$(echo "${{ github.event.inputs.tag-name || github.ref }}" | sed -n 's/refs\/tags\/v\(.*\)/\1/p')
+          if [[ -z "$VERSION" ]]; then
+            VERSION="dev-$(echo "${GITHUB_SHA}" | cut -c1-8)"
+          fi
+          echo "VERSION=$VERSION" >> $GITHUB_ENV
+          echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
+          echo "VERSION: '$VERSION'"
+
+      - name: Build binary
+        run: |
+          GOOS=darwin GOARCH=amd64 go build -ldflags="-s -w -X 'main.version=${{ steps.version.outputs.VERSION }}'" -v -o bin/${{ env.COMMAND_NAME }}_amd64 cmd/${{ env.COMMAND_NAME }}/main.go
+          GOOS=darwin GOARCH=arm64 go build -ldflags="-s -w -X 'main.version=${{ steps.version.outputs.VERSION }}'" -v -o bin/${{ env.COMMAND_NAME }}_arm64 cmd/${{ env.COMMAND_NAME }}/main.go
+          lipo -create -output bin/${{ env.COMMAND_NAME }} bin/${{ env.COMMAND_NAME }}_amd64 bin/${{ env.COMMAND_NAME }}_arm64
+
+      - name: Archive all bins as artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.COMMAND_NAME }}
+          path: bin/*
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    if: ${{ !startsWith(needs.build.outputs.version, 'dev-') }}
+    permissions:
+      contents: write
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v4
+
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: ${{ env.COMMAND_NAME }}
+          path: bin/
+
+      - name: Create Release
+        uses: ncipollo/release-action@v1
+        with:
+          allowUpdates: true
+          artifacts: "bin/*"
+          tag: v${{ needs.build.outputs.version }}
+          generateReleaseNotes: true
+          replacesArtifacts: true
+
+      - uses: mislav/bump-homebrew-formula-action@v3
+        with:
+          formula-name: ${{ env.COMMAND_NAME }}
+          formula-path: Formula/${{ env.COMMAND_NAME }}.rb
+          homebrew-tap: ${{ github.repository_owner }}/homebrew-tap
+          base-branch: main
+          tag-name: ${{ needs.build.outputs.version }}
+          download-url: https://github.com/${{ github.repository }}/releases/download/v${{ needs.build.outputs.version }}/${{ env.COMMAND_NAME }}
+          commit-message: |
+            Update {{formulaName}} to v{{version}}
+        env:
+          COMMITTER_TOKEN: ${{ secrets.COMMITTER_TOKEN }}
+          # GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
