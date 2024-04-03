@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"fmt"
 	"log"
 	"net/url"
 	"os"
@@ -71,17 +72,46 @@ func main() {
 		HideHelpCommand:      true,
 		HideHelp:             true,
 		EnableBashCompletion: true,
+		Flags: []cli.Flag{
+			&cli.StringFlag{
+				Name:   "create-man-page",
+				Value:  "-",
+				Hidden: true,
+				Action: func(c *cli.Context, value string) error {
+					var man, err = c.App.ToManWithSection(1)
+					if err != nil {
+						return err
+					}
+					if value != "-" {
+						// Write to file `value` man page
+						return os.WriteFile(value, []byte(man), 0644)
+					} else {
+						fmt.Print(man)
+					}
+					cli.OsExiter(0)
+					return nil
+				},
+			},
+		},
 		Commands: []*cli.Command{
 			{
-				Name:      "message",
-				Usage:     "Create commit message based on changes",
-				Action:    func(c *cli.Context) error { return git_message() },
+				Name:   "message",
+				Action: func(c *cli.Context) error { return git_message() },
+				Usage:  "Create commit message based on changes",
+				Description: strings.Replace(`Generate commit message based on not-committed changes.
+
+				Calling this Deep-link:
+				> raycast://ai-commands/git-commit-message?arguments={diff}`, "\t", "", -1),
 				ArgsUsage: " ",
 			},
 			{
-				Name:      "summary",
-				Usage:     "Create daily summary based on changes",
-				Action:    func(c *cli.Context) error { return git_summary() },
+				Name:   "summary",
+				Action: func(c *cli.Context) error { return git_summary() },
+				Usage:  "Create daily summary based on changes",
+				Description: strings.Replace(`Generate a summary of changes made in the repository since yesterday.
+
+				Calling this Deep-link:
+				> raycast://ai-commands/daily-summary?arguments={diff}`, "\t", "", -1),
 				ArgsUsage: " ",
 			},
 		},
