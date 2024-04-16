@@ -26,7 +26,7 @@ func executeGitCommand(args ...string) (string, error) {
 	}
 	return string(result), nil
 }
-func git_message() error {
+func gitMessage() (string, error) {
 	gitDiff, err := executeGitCommand("diff")
 	if gitDiff == "" {
 		gitDiff, err = executeGitCommand("diff", "--cached")
@@ -36,32 +36,43 @@ func git_message() error {
 	}
 
 	if err != nil {
-		return err
+		return "", err
 	}
 	if gitDiff == "" {
-		return cli.Exit("No changes found", 1)
+		return "", cli.Exit("No changes found", 1)
 	}
-	url := "raycast://ai-commands/git-commit-message?arguments=" + url.QueryEscape(gitDiff)
-	log.Println(url)
-	return open.Run(url)
+	return "raycast://ai-commands/git-commit-message?arguments=" + url.PathEscape(gitDiff), nil
 }
 
-func git_summary() error {
+func gitSummary() (string, error) {
 	gitHash, err := executeGitCommand("log", "-1", "--until=yesterday", "--pretty=format:%H")
 	if err != nil {
-		return err
+		return "", err
 	}
 	if gitHash == "" {
-		return cli.Exit("No commits found", 1)
+		return "", cli.Exit("No commits found", 1)
 	}
 	gitDiff, err := executeGitCommand("diff", gitHash, "HEAD")
 	if err != nil {
-		return err
+		return "", err
 	}
 
-	url := "raycast://ai-commands/daily-summary?arguments=" + url.QueryEscape(gitDiff)
-	log.Println(url)
-	return open.Run(url)
+	return "raycast://ai-commands/daily-summary?arguments=" + url.PathEscape(gitDiff), nil
+}
+
+func createCliAction(f func() (string, error)) func(c *cli.Context) error {
+	wrap := func(c *cli.Context) error {
+		result, err := f()
+		if err != nil {
+			return err
+		}
+		if c.Bool("verbose") {
+			log.Println(result)
+		}
+		return open.Run(result)
+	}
+
+	return wrap
 }
 
 func main() {
@@ -73,6 +84,14 @@ func main() {
 		HideHelp:             true,
 		EnableBashCompletion: true,
 		Flags: []cli.Flag{
+			&cli.BoolFlag{
+				Name:        "verbose",
+				Usage:       "Send raycast url to output",
+				Required:    false,
+				Value:       false,
+				Destination: nil,
+				Aliases:     []string{"V"},
+			},
 			&cli.StringFlag{
 				Name:   "create-man-page",
 				Value:  "-",
@@ -96,7 +115,7 @@ func main() {
 		Commands: []*cli.Command{
 			{
 				Name:   "message",
-				Action: func(c *cli.Context) error { return git_message() },
+				Action: createCliAction(gitMessage),
 				Usage:  "Create commit message based on changes",
 				Description: strings.Replace(`Generate commit message based on not-committed changes.
 
@@ -106,7 +125,7 @@ func main() {
 			},
 			{
 				Name:   "summary",
-				Action: func(c *cli.Context) error { return git_summary() },
+				Action: createCliAction(gitSummary),
 				Usage:  "Create daily summary based on changes",
 				Description: strings.Replace(`Generate a summary of changes made in the repository since yesterday.
 

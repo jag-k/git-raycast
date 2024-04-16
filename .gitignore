@@ -12,6 +12,7 @@ bin/
 # IDE/Editor folders
 .idea
 .vscode
+.fleet
 
 # Log files
 *.log
