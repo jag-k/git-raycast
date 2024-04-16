@@ -25,3 +25,6 @@ bin/
 .Trashes
 ehthumbs.db
 Thumbs.db
+
+# Local Wiki
+wiki/
