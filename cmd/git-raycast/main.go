@@ -14,6 +14,22 @@ import (
 
 var version = "dev"
 
+func raycastAICommand(commandName string, argument string) (string, error) {
+	baseUrl, err := url.Parse("raycast://ai-commands/")
+	if err != nil {
+		return "", err
+	}
+	baseUrl.Path += commandName
+
+	params := url.Values{}
+	params.Add("arguments", argument)
+
+	// Add Query Parameters to the URL
+	baseUrl.RawQuery = params.Encode() // Escape Query Parameters
+
+	return baseUrl.String(), err
+}
+
 func executeGitCommand(args ...string) (string, error) {
 	cmd := exec.Command("git", args...)
 	var stderr bytes.Buffer
@@ -40,7 +56,11 @@ func gitMessage() (string, error) {
 	if gitDiff == "" {
 		return "", cli.Exit("No changes found", 1)
 	}
-	return "raycast://ai-commands/git-commit-message?arguments=" + url.PathEscape(gitDiff), nil
+	result, err := raycastAICommand("git-commit-message", gitDiff)
+	if err != nil {
+		return "", err
+	}
+	return result, nil
 }
 
 func gitSummary() (string, error) {
@@ -55,8 +75,11 @@ func gitSummary() (string, error) {
 	if err != nil {
 		return "", err
 	}
-
-	return "raycast://ai-commands/daily-summary?arguments=" + url.PathEscape(gitDiff), nil
+	result, err := raycastAICommand("daily-summary", gitDiff)
+	if err != nil {
+		return "", err
+	}
+	return result, nil
 }
 
 func createCliAction(f func() (string, error)) func(c context.Context, command *cli.Command) error {
