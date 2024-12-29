@@ -39,6 +39,15 @@ jobs:
         with:
           args: build --clean --snapshot
 
+      - name: Create pre-release
+        uses: goreleaser/goreleaser-action@v6
+        if: |
+          github.ref_name == 'development' || github.ref_name == 'dev'
+        with:
+          args: release --clean --snapshot
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Make a release
         uses: goreleaser/goreleaser-action@v6
         if: startsWith(github.ref, 'refs/tags/v')

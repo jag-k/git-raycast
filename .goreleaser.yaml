@@ -4,6 +4,12 @@ project_name: git-raycast
 before:
   hooks:
     - go mod tidy
+    # Create completions directory if it doesn't exist
+    - mkdir -p dist/completions
+    # Generate completions
+    - go run ./git-raycast/main.go completion bash > dist/completions/git-raycast.bash
+    - go run ./git-raycast/main.go completion zsh > dist/completions/git-raycast.zsh
+    - go run ./git-raycast/main.go completion fish > dist/completions/git-raycast.fish
 
 builds:
   - id: git-raycast
@@ -32,9 +38,12 @@ archives:
     name_template: "{{ .ProjectName }}"
     format: tar.gz
     files:
-      - src: "autocomplete/*"
+      - src: "dist/completions/git-raycast.bash"
         dst: "."
-        strip_parent: true
+      - src: "dist/completions/git-raycast.zsh"
+        dst: "."
+      - src: "dist/completions/git-raycast.fish"
+        dst: "."
 
 brews:
   - repository:
@@ -50,9 +59,40 @@ brews:
     test: |
       system "#{bin}/git-raycast --version"
     install: |
-      bin.install "git-raycast"
-      bash_completion.install "git-raycast.bash"
-      zsh_completion.install "git-raycast.zsh"
+      if build.head?
+        system "go", "build", *std_go_args(output: bin/"git-raycast"), "./cmd/git-raycast"
+      else
+        bin.install "git-raycast"
+      end
+
+      bash_completion_path = "git-raycast.bash"
+      zsh_completion_path = "git-raycast.zsh"
+      fish_completion_path = "git-raycast.fish"
+
+      completion_files_missing = []
+      completion_files_missing << "bash" unless File.exist?(bash_completion_path)
+      completion_files_missing << "zsh" unless File.exist?(zsh_completion_path)
+      completion_files_missing << "fish" unless File.exist?(fish_completion_path)
+
+      if completion_files_missing.any?
+        opoo "Shell completion files are missing for: #{completion_files_missing.join(", ")}"
+      end
+
+      if File.exist?(bash_completion_path)
+        bash_completion.install bash_completion_path => "git-raycast.bash_completion"
+      end
+
+      if File.exist?(zsh_completion_path)
+        zsh_completion.install zsh_completion_path => "_git-raycast"
+      end
+
+      if File.exist?(fish_completion_path)
+        fish_completion.install fish_completion_path
+      end
+
+release:
+  github:
+  mode: replace
 
 checksum:
   name_template: "checksums.txt"
