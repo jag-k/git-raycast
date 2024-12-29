@@ -11,6 +11,9 @@ jobs:
     name: Check Build
     runs-on: macos-latest
     steps:
+      - name: Check out code
+        uses: actions/checkout@v4
+
       - uses: ./.github/actions/setup
 
       - name: Run GoReleaser Build

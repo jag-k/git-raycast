@@ -20,6 +20,9 @@ jobs:
     name: Build and Release
     runs-on: macos-latest
     steps:
+      - name: Check out code
+        uses: actions/checkout@v4
+
       - uses: ./.github/actions/setup
 
       - name: Get version
