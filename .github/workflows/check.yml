@@ -1,0 +1,21 @@
+name: Check Build
+
+on:
+  push:
+    branches: ["*"]
+    tags-ignore: ["v*"]
+  pull_request:
+
+jobs:
+  check:
+    name: Check Build
+    runs-on: macos-latest
+    steps:
+      - uses: ./.github/actions/setup
+
+      - name: Run GoReleaser Build
+        uses: goreleaser/goreleaser-action@v5
+        with:
+          distribution: goreleaser
+          version: latest
+          args: build --clean --snapshot
