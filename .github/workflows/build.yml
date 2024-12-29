@@ -16,15 +16,13 @@ permissions:
   contents: write
 
 jobs:
-  build:
-    name: Build and Release
+  setup:
+    uses: ./.github/workflows/setup.yml
+
+  release:
+    needs: setup
     runs-on: macos-latest
     steps:
-      - name: Check out code
-        uses: actions/checkout@v4
-
-      - uses: ./.github/actions/setup
-
       - name: Get version
         id: version
         run: |

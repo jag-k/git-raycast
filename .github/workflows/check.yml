@@ -7,15 +7,13 @@ on:
   pull_request:
 
 jobs:
+  setup:
+    uses: ./.github/workflows/setup.yml
+
   check:
-    name: Check Build
+    needs: setup
     runs-on: macos-latest
     steps:
-      - name: Check out code
-        uses: actions/checkout@v4
-
-      - uses: ./.github/actions/setup
-
       - name: Run GoReleaser Build
         uses: goreleaser/goreleaser-action@v5
         with:
