@@ -21,7 +21,7 @@ builds:
       - -trimpath
     ldflags:
       - -s -w
-      - -X main.version={{ .Env.VERSION }}
+      - -X main.version={{ .Version }}
 
 universal_binaries:
   - replace: true
