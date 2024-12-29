@@ -19,7 +19,21 @@ jobs:
   release:
     runs-on: macos-latest
     steps:
-      - uses: ./.github/workflows/setup.yml
+      - name: Check out code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: "go.mod"
+          cache: true
+
+      - name: Run GoReleaser Check
+        uses: goreleaser/goreleaser-action@v6
+        with:
+          args: check
 
       - name: Get version
         id: version
@@ -32,10 +46,8 @@ jobs:
           echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
 
       - name: Run GoReleaser
-        uses: goreleaser/goreleaser-action@v5
+        uses: goreleaser/goreleaser-action@v6
         with:
-          distribution: goreleaser
-          version: v2.5.0
           args: release --clean
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
