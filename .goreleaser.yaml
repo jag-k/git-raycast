@@ -1,0 +1,68 @@
+version: 2
+project_name: git-raycast
+
+before:
+  hooks:
+    - go mod tidy
+
+builds:
+  - id: git-raycast
+    binary: git-raycast
+    main: ./git-raycast/main.go
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - darwin
+    goarch:
+      - amd64
+      - arm64
+    mod_timestamp: "{{ .CommitTimestamp }}"
+    flags:
+      - -trimpath
+    ldflags:
+      - -s -w
+      - -X main.version={{ .Env.VERSION }}
+
+universal_binaries:
+  - replace: true
+    name_template: git-raycast
+
+archives:
+  - id: git-raycast
+    name_template: "{{ .ProjectName }}"
+    format: tar.gz
+    files:
+      - src: "autocomplete/*"
+        dst: "."
+        strip_parent: true
+
+brews:
+  - repository:
+      owner: "{{ .Env.GITHUB_REPOSITORY_OWNER }}"
+      name: homebrew-tap
+      token: "{{ .Env.COMMITTER_TOKEN }}"
+    commit_author:
+      name: "{{ .Env.GITHUB_ACTOR }}"
+      email: "{{ .Env.GITHUB_ACTOR }}@users.noreply.github.com"
+    homepage: "https://github.com/{{ .Env.GITHUB_REPOSITORY }}"
+    description: "Automate git using Raycast AI"
+    license: "MIT"
+    test: |
+      system "#{bin}/git-raycast --version"
+    install: |
+      bin.install "git-raycast"
+      bash_completion.install "git-raycast.bash"
+      zsh_completion.install "git-raycast.zsh"
+
+checksum:
+  name_template: "checksums.txt"
+
+changelog:
+  sort: asc
+  filters:
+    exclude:
+      - "^docs:"
+      - "^test:"
+      - "^ci:"
+      - Merge pull request
+      - Merge branch
