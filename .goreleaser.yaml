@@ -1,5 +1,6 @@
 version: 2
 project_name: git-raycast
+report_sizes: true
 
 before:
   hooks:
@@ -54,7 +55,7 @@ brews:
       system "#{bin}/git-raycast --version"
     install: |
       if build.head?
-        system "go", "build", *std_go_args(output: bin/"git-raycast"), "./cmd/git-raycast"
+        system "go", "build", *std_go_args(output: bin/"git-raycast"), "./git-raycast"
       else
         bin.install "git-raycast"
       end
@@ -86,7 +87,16 @@ brews:
 
 release:
   github:
-  mode: replace
+    owner: "{{ .Env.GITHUB_REPOSITORY_OWNER }}"
+    name: "{{ .ProjectName }}"
+
+  draft: false
+  replace_existing_draft: true
+  use_existing_draft: true
+  replace_existing_artifacts: true
+  prerelease: auto
+
+  include_meta: true
 
 checksum:
   name_template: "checksums.txt"

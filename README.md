@@ -41,7 +41,7 @@ go mod download
 Build:
 
 ```shell
-go build -o ./bin/git-raycast ./cmd/git-raycast
+go build -o ./bin/git-raycast ./git-raycast
 ```
 
 Run:
@@ -49,7 +49,7 @@ Run:
 ```shell
 ./bin/git-raycast
 # or
-go run ./cmd/git-raycast
+go run ./git-raycast
 ```
 
 ## License
