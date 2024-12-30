@@ -71,11 +71,6 @@ brews:
       zsh_completion_path = "git-raycast.zsh"
       fish_completion_path = "git-raycast.fish"
 
-      completion_files_missing = []
-      completion_files_missing << "bash" unless File.exist?(bash_completion_path)
-      completion_files_missing << "zsh" unless File.exist?(zsh_completion_path)
-      completion_files_missing << "fish" unless File.exist?(fish_completion_path)
-
       bash_completion.install bash_completion_path => "git-raycast.bash_completion" if File.exist?(bash_completion_path)
       zsh_completion.install zsh_completion_path => "_git-raycast" if File.exist?(zsh_completion_path)
       fish_completion.install fish_completion_path if File.exist?(fish_completion_path)
@@ -86,6 +81,16 @@ release:
     name: "{{ .ProjectName }}"
   draft: false
   include_meta: true
+  footer: |
+    **Full Changelog**: https://github.com/{{ .Env.GITHUB_REPOSITORY }}/compare/{{ .PreviousTag }}...{{ .Tag }}
+
+    Checksum of release:
+
+    ```
+    {{ .Checksums }}
+    ```
+
+    > Raycast AI is a product of [Raycast](https://raycast.com).
 
 checksum:
   name_template: "checksums.txt"
