@@ -1,3 +1,4 @@
+# yaml-language-server: $schema=https://goreleaser.com/static/schema.json
 version: 2
 project_name: git-raycast
 report_sizes: true
@@ -91,11 +92,13 @@ release:
     name: "{{ .ProjectName }}"
 
   draft: false
+  target_commitish: '{{ if eq (envOrDefault "PRERELEASE" "false") "true" }}{{ .Commit }}{{ else }}{{ end }}'
   replace_existing_draft: true
   use_existing_draft: true
   replace_existing_artifacts: true
   prerelease: '{{ if eq (envOrDefault "PRERELEASE" "false") "true" }}true{{ else }}auto{{ end }}'
 
+  mode: replace
   include_meta: true
 
 checksum:

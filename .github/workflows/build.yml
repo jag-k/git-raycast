@@ -44,7 +44,7 @@ jobs:
         if: |
           github.ref_name == 'development' || github.ref_name == 'dev'
         with:
-          args: release --clean --skip homebrew
+          args: release --clean --skip homebrew --snapshot
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PRERELEASE: true
