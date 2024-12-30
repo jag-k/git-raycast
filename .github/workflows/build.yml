@@ -5,100 +5,51 @@ env:
 
 on:
   push:
-
   workflow_dispatch:
     inputs:
       tag-name:
-        description: 'The git tag name to bump the formula to'
+        description: "The git tag name to bump the formula to"
         required: true
 
+permissions:
+  contents: write
+
 jobs:
-  build:
-    name: Build
+  release:
     runs-on: macos-latest
-    outputs:
-      version: ${{ steps.version.outputs.VERSION }}
     steps:
       - name: Check out code
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
-          go-version-file: 'go.mod'
+          go-version-file: "go.mod"
+          cache: true
 
-      - name: Get dependencies
-        run: go mod download
+      - name: Check goreleaser
+        uses: goreleaser/goreleaser-action@v6
+        with:
+          args: check
 
-      - name: Get version of the project
-        id: version
-        # If have tag, than use it like `1.0.0`, not `v1.0.0`,
-        # otherwise use short commit hash
-        run: |
-          VERSION=$(echo "${{ github.event.inputs.tag-name || github.ref }}" | sed -n 's/refs\/tags\/v\(.*\)/\1/p')
-          if [[ -z "$VERSION" ]]; then
-            VERSION="dev-$(echo "${GITHUB_SHA}" | cut -c1-8)"
-          fi
-          echo "VERSION=$VERSION" >> $GITHUB_ENV
-          echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
-          echo "VERSION: '$VERSION'"
+      - name: Make a build
+        uses: goreleaser/goreleaser-action@v6
+        with:
+          args: build --clean --snapshot
 
-      - name: Build binary
-        # language=shell script
-        run: |
-          GOOS=darwin GOARCH=amd64 go build -ldflags="-s -w -X 'main.version=${{ steps.version.outputs.VERSION }}'" -v -o bin/${{ env.COMMAND_NAME }}_amd64 cmd/${{ env.COMMAND_NAME }}/main.go
-          GOOS=darwin GOARCH=arm64 go build -ldflags="-s -w -X 'main.version=${{ steps.version.outputs.VERSION }}'" -v -o bin/${{ env.COMMAND_NAME }}_arm64 cmd/${{ env.COMMAND_NAME }}/main.go
-          lipo -create -output bin/${{ env.COMMAND_NAME }} bin/${{ env.COMMAND_NAME }}_amd64 bin/${{ env.COMMAND_NAME }}_arm64
-
-          # Create autocomplete
-          find autocomplete/* -type f -exec sed -i '' 's/<PROG_NAME>/${{ env.COMMAND_NAME }}/g' {} +
-          mv autocomplete/bash_autocomplete autocomplete/${{ env.COMMAND_NAME }}.bash
-          mv autocomplete/zsh_autocomplete autocomplete/${{ env.COMMAND_NAME }}.zsh
-
-          # Make tar.gz archive with all binaries and completions
-          tar -czf bin/${{ env.COMMAND_NAME }}.tar.gz autocomplete/* -C bin/ ${{ env.COMMAND_NAME }}_amd64 ${{ env.COMMAND_NAME }}_arm64
-
-      - name: Archive all bins as artifacts
+      - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
           name: ${{ env.COMMAND_NAME }}
-          path: bin/*
+          path: dist/*
 
-  release:
-    needs: build
-    runs-on: ubuntu-latest
-    if: ${{ !startsWith(needs.build.outputs.version, 'dev-') }}
-    permissions:
-      contents: write
-    steps:
-      - name: Check out code
-        uses: actions/checkout@v4
-
-      - name: Download artifacts
-        uses: actions/download-artifact@v4
+      - name: Make a release
+        uses: goreleaser/goreleaser-action@v6
+        if: startsWith(github.ref, 'refs/tags/v')
         with:
-          name: ${{ env.COMMAND_NAME }}
-          path: bin/
-
-      - name: Create Release
-        uses: ncipollo/release-action@v1
-        with:
-          allowUpdates: true
-          artifacts: "bin/*"
-          tag: v${{ needs.build.outputs.version }}
-          generateReleaseNotes: true
-          replacesArtifacts: true
-
-      - uses: mislav/bump-homebrew-formula-action@v3
-        with:
-          formula-name: ${{ env.COMMAND_NAME }}
-          formula-path: Formula/${{ env.COMMAND_NAME }}.rb
-          homebrew-tap: ${{ github.repository_owner }}/homebrew-tap
-          base-branch: main
-          tag-name: ${{ needs.build.outputs.version }}
-          download-url: https://github.com/${{ github.repository }}/releases/download/v${{ needs.build.outputs.version }}/${{ env.COMMAND_NAME }}.tar.gz
-          commit-message: |
-            Update {{formulaName}} to v{{version}}
+          args: release --clean
         env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           COMMITTER_TOKEN: ${{ secrets.COMMITTER_TOKEN }}
-          # GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

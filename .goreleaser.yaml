@@ -1,0 +1,104 @@
+# yaml-language-server: $schema=https://goreleaser.com/static/schema.json
+version: 2
+project_name: git-raycast
+report_sizes: true
+
+before:
+  hooks:
+    - go mod tidy
+    # Generate completions
+    - make completions
+
+builds:
+  - id: git-raycast
+    binary: git-raycast
+    main: ./git-raycast/main.go
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - darwin
+    goarch:
+      - amd64
+      - arm64
+    mod_timestamp: "{{ .CommitTimestamp }}"
+    flags:
+      - -trimpath
+
+universal_binaries:
+  - replace: true
+    name_template: git-raycast
+
+archives:
+  - id: git-raycast
+    name_template: "{{ .ProjectName }}"
+    format: tar.gz
+    files:
+      - "LICENSE"
+      - "README.md"
+      - src: "completions.build/*"
+        dst: "."
+
+brews:
+  - repository:
+      owner: "{{ .Env.GITHUB_REPOSITORY_OWNER }}"
+      name: homebrew-tap
+      token: "{{ .Env.COMMITTER_TOKEN }}"
+    commit_author:
+      name: "{{ .Env.GITHUB_ACTOR }}"
+      email: "{{ .Env.GITHUB_ACTOR }}@users.noreply.github.com"
+    homepage: "https://github.com/{{ .Env.GITHUB_REPOSITORY }}"
+    description: "Automate git using Raycast AI"
+    license: "MIT"
+    test: |
+      system "#{bin}/git-raycast --version"
+    install: |
+      if build.head?
+        system "go", "build", *std_go_args(output: bin/"git-raycast"), "./git-raycast"
+      else
+        bin.install "git-raycast"
+      end
+
+      bash_completion_path = "git-raycast.bash"
+      zsh_completion_path = "git-raycast.zsh"
+      fish_completion_path = "git-raycast.fish"
+
+      completion_files_missing = []
+      completion_files_missing << "bash" unless File.exist?(bash_completion_path)
+      completion_files_missing << "zsh" unless File.exist?(zsh_completion_path)
+      completion_files_missing << "fish" unless File.exist?(fish_completion_path)
+
+      if completion_files_missing.any?
+        opoo "Shell completion files are missing for: #{completion_files_missing.join(", ")}"
+      end
+
+      if File.exist?(bash_completion_path)
+        bash_completion.install bash_completion_path => "git-raycast.bash_completion"
+      end
+
+      if File.exist?(zsh_completion_path)
+        zsh_completion.install zsh_completion_path => "_git-raycast"
+      end
+
+      if File.exist?(fish_completion_path)
+        fish_completion.install fish_completion_path
+      end
+
+release:
+  github:
+    owner: "{{ .Env.GITHUB_REPOSITORY_OWNER }}"
+    name: "{{ .ProjectName }}"
+  draft: false
+  include_meta: true
+
+checksum:
+  name_template: "checksums.txt"
+
+changelog:
+  sort: asc
+  filters:
+    exclude:
+      - "^docs:"
+      - "^test:"
+      - "^ci:"
+      - Merge pull request
+      - Merge branch

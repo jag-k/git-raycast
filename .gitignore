@@ -28,3 +28,7 @@ Thumbs.db
 
 # Local Wiki
 wiki/
+
+# Build
+dist/
+*.build
