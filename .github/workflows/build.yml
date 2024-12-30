@@ -44,9 +44,10 @@ jobs:
         if: |
           github.ref_name == 'development' || github.ref_name == 'dev'
         with:
-          args: release --clean --snapshot --skip homebrew
+          args: release --clean --skip homebrew
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PRERELEASE: true
 
       - name: Make a release
         uses: goreleaser/goreleaser-action@v6

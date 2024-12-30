@@ -94,7 +94,7 @@ release:
   replace_existing_draft: true
   use_existing_draft: true
   replace_existing_artifacts: true
-  prerelease: auto
+  prerelease: '{{ if eq (envOrDefault "PRERELEASE" "false") "true" }}true{{ else }}auto{{ end }}'
 
   include_meta: true
 
