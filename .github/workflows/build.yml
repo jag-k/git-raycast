@@ -39,12 +39,18 @@ jobs:
         with:
           args: build --clean --snapshot
 
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.COMMAND_NAME }}
+          path: bin/*
+
       - name: Create pre-release
         uses: goreleaser/goreleaser-action@v6
         if: |
           github.ref_name == 'development' || github.ref_name == 'dev'
         with:
-          args: release --clean --skip homebrew --snapshot
+          args: release --clean --skip homebrew --auto-snapshot
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PRERELEASE: true
