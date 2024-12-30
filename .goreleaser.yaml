@@ -10,8 +10,7 @@ before:
     - make completions
 
 builds:
-  - id: git-raycast
-    binary: git-raycast
+  - binary: git-raycast
     main: ./git-raycast/main.go
     env:
       - CGO_ENABLED=0
@@ -57,10 +56,10 @@ brews:
 
       head do
         url "https://github.com/{{ .Env.GITHUB_REPOSITORY }}.git", branch: "main"
-        depends_on "go" => :build  # Only needed for building from source
+        depends_on "go" => :build
       end
     test: |
-      assert_match version.to_s, shell_output("#{bin}/#{NAME} --version")
+      assert_match version.to_s, shell_output("#{bin}/{{ .ProjectName }} --version")
     install: |
       if build.head?
         system "go", "build", *std_go_args(output: bin/"git-raycast"), "./git-raycast"
@@ -77,21 +76,9 @@ brews:
       completion_files_missing << "zsh" unless File.exist?(zsh_completion_path)
       completion_files_missing << "fish" unless File.exist?(fish_completion_path)
 
-      if completion_files_missing.any?
-        opoo "Shell completion files are missing for: #{completion_files_missing.join(", ")}"
-      end
-
-      if File.exist?(bash_completion_path)
-        bash_completion.install bash_completion_path => "git-raycast.bash_completion"
-      end
-
-      if File.exist?(zsh_completion_path)
-        zsh_completion.install zsh_completion_path => "_git-raycast"
-      end
-
-      if File.exist?(fish_completion_path)
-        fish_completion.install fish_completion_path
-      end
+      bash_completion.install bash_completion_path => "git-raycast.bash_completion" if File.exist?(bash_completion_path)
+      zsh_completion.install zsh_completion_path => "_git-raycast" if File.exist?(zsh_completion_path)
+      fish_completion.install fish_completion_path if File.exist?(fish_completion_path)
 
 release:
   github:
