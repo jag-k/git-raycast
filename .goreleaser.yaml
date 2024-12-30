@@ -26,11 +26,10 @@ builds:
 
 universal_binaries:
   - replace: true
-    name_template: git-raycast
+    mod_timestamp: "{{ .CommitTimestamp }}"
 
 archives:
-  - id: git-raycast
-    name_template: "{{ .ProjectName }}"
+  - name_template: "{{ .ProjectName }}"
     format: tar.gz
     files:
       - "LICENSE"
@@ -49,8 +48,19 @@ brews:
     homepage: "https://github.com/{{ .Env.GITHUB_REPOSITORY }}"
     description: "Automate git using Raycast AI"
     license: "MIT"
+    directory: Formula
+    custom_block: |
+      livecheck do
+        url :stable
+        strategy :github_latest
+      end
+
+      head do
+        url "https://github.com/{{ .Env.GITHUB_REPOSITORY }}.git", branch: "main"
+        depends_on "go" => :build  # Only needed for building from source
+      end
     test: |
-      system "#{bin}/git-raycast --version"
+      assert_match version.to_s, shell_output("#{bin}/#{NAME} --version")
     install: |
       if build.head?
         system "go", "build", *std_go_args(output: bin/"git-raycast"), "./git-raycast"
