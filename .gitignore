@@ -25,7 +25,10 @@ bin/
 .Trashes
 ehthumbs.db
 Thumbs.db
-dist/
 
 # Local Wiki
 wiki/
+
+# Build
+dist/
+*.build

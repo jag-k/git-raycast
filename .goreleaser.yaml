@@ -4,12 +4,8 @@ project_name: git-raycast
 before:
   hooks:
     - go mod tidy
-    # Create completions directory if it doesn't exist
-    - mkdir -p dist/completions
     # Generate completions
-    - go run ./git-raycast/main.go completion bash > dist/completions/git-raycast.bash
-    - go run ./git-raycast/main.go completion zsh > dist/completions/git-raycast.zsh
-    - go run ./git-raycast/main.go completion fish > dist/completions/git-raycast.fish
+    - make completions
 
 builds:
   - id: git-raycast
@@ -38,11 +34,9 @@ archives:
     name_template: "{{ .ProjectName }}"
     format: tar.gz
     files:
-      - src: "dist/completions/git-raycast.bash"
-        dst: "."
-      - src: "dist/completions/git-raycast.zsh"
-        dst: "."
-      - src: "dist/completions/git-raycast.fish"
+      - "LICENSE"
+      - "README.md"
+      - src: "completions.build/*"
         dst: "."
 
 brews:
