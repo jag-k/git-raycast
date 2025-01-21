@@ -18,12 +18,15 @@ your PATH.+
 ## Usage
 
 ```shell
+git-raycast
+# OR
 git raycast
 ```
 
 ### Supported commands
 
 - [`message` - Create commit message based on changes](https://github.com/jag-k/git-raycast/wiki/Commands#message)
+- [`mr`/`pr` - Generate MR/PR Summary message](https://github.com/jag-k/git-raycast/wiki/Commands#mr-pr-sumary)
 - [`summary` - Create daily summary based on changes since yesterday](https://github.com/jag-k/git-raycast/wiki/Commands#summary)
 
 ## Development
