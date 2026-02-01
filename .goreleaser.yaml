@@ -29,51 +29,45 @@ universal_binaries:
 
 archives:
   - name_template: "{{ .ProjectName }}"
-    format: tar.gz
+    formats:
+      - tar.gz
     files:
       - "LICENSE"
       - "README.md"
       - src: "completions.build/*"
         dst: "."
 
-brews:
-  - repository:
+homebrew_casks:
+  - name: git-raycast
+    custom_block: |
+      livecheck do
+        url :stable
+        strategy :github_latest
+      end
+    repository:
       owner: "{{ .Env.GITHUB_REPOSITORY_OWNER }}"
       name: homebrew-tap
       token: "{{ .Env.COMMITTER_TOKEN }}"
     commit_author:
       name: "{{ .Env.GITHUB_ACTOR }}"
       email: "{{ .Env.GITHUB_ACTOR }}@users.noreply.github.com"
+    commit_msg_template: "Brew cask update for {{ .ProjectName }} version {{ .Tag }}"
     homepage: "https://github.com/{{ .Env.GITHUB_REPOSITORY }}"
     description: "Automate git using Raycast AI"
-    license: "MIT"
-    directory: Formula
-    custom_block: |
-      livecheck do
-        url :stable
-        strategy :github_latest
-      end
-
-      head do
-        url "https://github.com/{{ .Env.GITHUB_REPOSITORY }}.git", branch: "main"
-        depends_on "go" => :build
-      end
-    test: |
-      assert_match version.to_s, shell_output("#{bin}/{{ .ProjectName }} --version")
-    install: |
-      if build.head?
-        system "go", "build", *std_go_args(output: bin/"git-raycast"), "./git-raycast"
-      else
-        bin.install "git-raycast"
-      end
-
-      bash_completion_path = "git-raycast.bash"
-      zsh_completion_path = "git-raycast.zsh"
-      fish_completion_path = "git-raycast.fish"
-
-      bash_completion.install bash_completion_path => "git-raycast.bash_completion" if File.exist?(bash_completion_path)
-      zsh_completion.install zsh_completion_path => "_git-raycast" if File.exist?(zsh_completion_path)
-      fish_completion.install fish_completion_path if File.exist?(fish_completion_path)
+    url:
+      verified: "github.com/{{ .Env.GITHUB_REPOSITORY }}"
+    binaries:
+      - git-raycast
+    completions:
+      bash: git-raycast.bash
+      zsh: git-raycast.zsh
+      fish: git-raycast.fish
+    hooks:
+      post:
+        install: |
+          if OS.mac?
+            system_command "/usr/bin/xattr", args: ["-dr", "com.apple.quarantine", "#{staged_path}/git-raycast"]
+          end
 
 release:
   github:
