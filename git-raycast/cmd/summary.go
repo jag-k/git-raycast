@@ -3,6 +3,7 @@ package cmd
 import (
 	"fmt"
 	"git-raycast/git-raycast/git"
+	"git-raycast/git-raycast/utils"
 	"log"
 
 	"github.com/skratchdot/open-golang/open"
@@ -10,12 +11,17 @@ import (
 )
 
 var summaryCmd = &cobra.Command{
-	Use:   "summary",
+	Use:   "summary [command-name]",
 	Short: "Create daily summary based on changes",
 	Long: `Generate a summary of changes made in the repository since yesterday.
 
+The Raycast AI command name can be customized:
+- By passing [command-name] argument
+- By setting GIT_RAYCAST_SUMMARY_NAME environment variable
+- Default: daily-summary
+
 Calling this Deep-link:
-> raycast://ai-commands/daily-summary?arguments={diff}
+> raycast://ai-commands/{command-name}?arguments={diff}
 
 More info here: https://github.com/jag-k/git-raycast/wiki/Commands#summary`,
 	RunE: runSummary,
@@ -42,7 +48,8 @@ func runSummary(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	result, err := buildRaycastURL("daily-summary", gitDiff)
+	commandName := utils.GetCommandName("GIT_RAYCAST_SUMMARY_NAME", "daily-summary", args, 0)
+	result, err := utils.BuildRaycastURL(commandName, gitDiff)
 	if err != nil {
 		return err
 	}
