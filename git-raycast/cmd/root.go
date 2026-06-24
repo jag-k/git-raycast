@@ -5,8 +5,9 @@ import (
 )
 
 var (
-	version string
-	verbose bool
+	version        string
+	verbose        bool
+	raycastVersion string
 
 	rootCmd = &cobra.Command{
 		Use:   "git-raycast",
@@ -26,5 +27,6 @@ func SetVersion(v string) {
 
 func init() {
 	rootCmd.PersistentFlags().BoolVarP(&verbose, "verbose", "V", false, "Send raycast url to output")
+	rootCmd.PersistentFlags().StringVar(&raycastVersion, "raycast-version", "", "Raycast version to open: stable or beta (env: GIT_RAYCAST_VERSION)")
 	rootCmd.SetHelpCommand(&cobra.Command{Hidden: true})
 }

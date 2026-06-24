@@ -23,6 +23,26 @@ func ExecuteCommand(args ...string) (string, error) {
 	return string(result), nil
 }
 
+// GetConfig returns a git config value using Git's standard lookup order.
+func GetConfig(key string) (string, error) {
+	cmd := exec.Command("git", "config", "--get", key)
+	var stderr bytes.Buffer
+	cmd.Stderr = &stderr
+
+	result, err := cmd.Output()
+	if err != nil {
+		if exitError, ok := err.(*exec.ExitError); ok && exitError.ExitCode() == 1 {
+			return "", nil
+		}
+
+		return "", fmt.Errorf("git error:\nCommand: `git config --get %s`\nError: %s",
+			key,
+			strings.TrimSpace(stderr.String()))
+	}
+
+	return strings.TrimSpace(string(result)), nil
+}
+
 // GetDiff получает изменения в репозитории
 func GetDiff() (string, error) {
 	gitDiff, err := ExecuteCommand("diff")

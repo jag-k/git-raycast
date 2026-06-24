@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"fmt"
+	"git-raycast/git-raycast/config"
 	"git-raycast/git-raycast/git"
 	"git-raycast/git-raycast/utils"
 	"log"
@@ -33,10 +34,12 @@ By default, the target branch is ` + "`origin/main`" + `
 The Raycast AI command name can be customized:
 - By passing [command-name] argument
 - By setting GIT_RAYCAST_MR_PR_SUMMARY_NAME environment variable
+- By setting git config git-raycast.mr-pr-summary-name
 - Default: mr-pr-summary
 
 Calling this Deep-link:
 > raycast://ai-commands/{command-name}?arguments={diff}
+> raycast-x://extensions/raycast/ai/{command-name}?arguments={diff} (with --raycast-version beta)
 
 More info here: https://github.com/jag-k/git-raycast/wiki/Commands#mr-pr-summary`,
 	RunE: runMRPRSummary,
@@ -60,8 +63,17 @@ func runMRPRSummary(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("no commits found")
 	}
 
-	commandName := utils.GetCommandName("GIT_RAYCAST_MR_PR_SUMMARY_NAME", "mr-pr-summary", args, 1)
-	result, err := utils.BuildRaycastURL(commandName, gitDiff)
+	commandName, err := config.CommandName(config.MRPRSummaryCommandName, args, 1)
+	if err != nil {
+		return err
+	}
+
+	version, err := config.RaycastVersion(raycastVersion)
+	if err != nil {
+		return err
+	}
+
+	result, err := utils.BuildRaycastURL(commandName, gitDiff, version)
 	if err != nil {
 		return err
 	}

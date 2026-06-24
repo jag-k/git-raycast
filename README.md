@@ -29,6 +29,36 @@ git raycast
 - [`mr`/`pr` - Generate MR/PR Summary message](https://github.com/jag-k/git-raycast/wiki/Commands#mr-pr-sumary)
 - [`summary` - Create daily summary based on changes since yesterday](https://github.com/jag-k/git-raycast/wiki/Commands#summary)
 
+### Raycast version
+
+By default, `git-raycast` opens commands in stable Raycast:
+
+```shell
+git-raycast message
+```
+
+For Raycast beta, use:
+
+```shell
+git-raycast --raycast-version beta message
+# OR
+GIT_RAYCAST_VERSION=beta git-raycast message
+# OR
+git config --global git-raycast.raycast-version beta
+```
+
+Settings priority is: CLI argument or flag, environment variable, Git config, default value.
+
+Command names can also be configured with Git config:
+
+```shell
+git config --global git-raycast.message-name git-commit-message
+git config --global git-raycast.summary-name daily-summary
+git config --global git-raycast.mr-pr-summary-name mr-pr-summary
+```
+
+Omit `--global` to set a value only for the current repository.
+
 ## Development
 
 Requirements:
