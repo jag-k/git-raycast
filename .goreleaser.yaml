@@ -6,8 +6,6 @@ report_sizes: true
 before:
   hooks:
     - go mod tidy
-    # Generate completions
-    - make completions
 
 builds:
   - binary: git-raycast
@@ -34,8 +32,6 @@ archives:
     files:
       - "LICENSE"
       - "README.md"
-      - src: "completions.build/*"
-        dst: "."
 
 homebrew_casks:
   - name: git-raycast
@@ -53,10 +49,16 @@ homebrew_casks:
       verified: "github.com/{{ .Env.GITHUB_REPOSITORY }}"
     binaries:
       - git-raycast
-    completions:
-      bash: git-raycast.bash
-      zsh: git-raycast.zsh
-      fish: git-raycast.fish
+    generate_completions_from_executable:
+      executable: "bin/git-raycast"
+      args:
+        - completion
+      base_name: "git-raycast"
+      shell_parameter_format: cobra
+      shells:
+        - bash
+        - zsh
+        - fish
     hooks:
       post:
         install: |
