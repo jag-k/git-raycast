@@ -24,7 +24,7 @@ func TestBuildRaycastURLBeta(t *testing.T) {
 		t.Fatalf("BuildRaycastURL returned error: %v", err)
 	}
 
-	expected := "raycast-x://extensions/raycast/ai/git-commit-message?arguments=hello+world"
+	expected := "raycast-x://extensions/raycast/ai/git-commit-message?arguments=%7B%22diff%22%3A%22hello+world%22%7D"
 	if result != expected {
 		t.Fatalf("BuildRaycastURL() = %q, want %q", result, expected)
 	}

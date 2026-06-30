@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"encoding/json"
 	"fmt"
 	"net/url"
 
@@ -16,6 +17,15 @@ func BuildRaycastURL(commandName, argument, raycastVersion string) (string, erro
 
 	baseURL.Path += commandName
 	params := url.Values{}
+
+	if raycastVersion == config.RaycastVersionBeta {
+		jsonArguments, err := json.Marshal(map[string]string{"diff": argument})
+		if err != nil {
+			return "", err
+		}
+		argument = string(jsonArguments)
+	}
+
 	params.Add("arguments", argument)
 	baseURL.RawQuery = params.Encode()
 

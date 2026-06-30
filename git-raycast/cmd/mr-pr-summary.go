@@ -39,7 +39,7 @@ The Raycast AI command name can be customized:
 
 Calling this Deep-link:
 > raycast://ai-commands/{command-name}?arguments={diff}
-> raycast-x://extensions/raycast/ai/{command-name}?arguments={diff} (with --raycast-version beta)
+> raycast-x://extensions/raycast/ai/{command-name}?arguments={"diff":"{diff}"} (with --raycast-version beta)
 
 More info here: https://github.com/jag-k/git-raycast/wiki/Commands#mr-pr-summary`,
 	RunE: runMRPRSummary,

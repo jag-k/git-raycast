@@ -49,6 +49,20 @@ git config --global git-raycast.raycast-version beta
 
 Settings priority is: CLI argument or flag, environment variable, Git config, default value.
 
+Raycast beta uses the `raycast-x://` scheme and expects command arguments as URL-encoded JSON. The decoded arguments payload is:
+
+```json
+{"diff":"..."}
+```
+
+Which is opened as:
+
+```text
+raycast-x://extensions/raycast/ai/{command-name}?arguments=%7B%22diff%22%3A%22...%22%7D
+```
+
+For stable Raycast, the argument is passed as plain text in `arguments`.
+
 Command names can also be configured with Git config:
 
 ```shell
