@@ -49,10 +49,6 @@ homebrew_casks:
       verified: "github.com/{{ .Env.GITHUB_REPOSITORY }}"
     binaries:
       - git-raycast
-    custom_block: |
-      generate_completions_from_executable "git-raycast", "git-completion",
-        base_name: "git_raycast",
-        shells: [:bash, :zsh]
     generate_completions_from_executable:
       executable: "git-raycast"
       base_name: "git-raycast"
