@@ -7,6 +7,15 @@ import (
 	"strings"
 )
 
+type DiffMode string
+
+const (
+	DiffModeAuto    DiffMode = "auto"
+	DiffModeStage   DiffMode = "stage"
+	DiffModeUnstage DiffMode = "unstage"
+	DiffModeAll     DiffMode = "all"
+)
+
 // ExecuteCommand выполняет git команду и возвращает результат
 func ExecuteCommand(args ...string) (string, error) {
 	cmd := exec.Command("git", args...)
@@ -43,28 +52,48 @@ func GetConfig(key string) (string, error) {
 	return strings.TrimSpace(string(result)), nil
 }
 
-// GetDiff получает изменения в репозитории
-func GetDiff() (string, error) {
-	gitDiff, err := ExecuteCommand("diff")
-	if err != nil {
-		return "", err
-	}
-
-	if gitDiff == "" {
-		gitDiff, err = ExecuteCommand("diff", "--cached")
+// GetDiff returns repository changes selected by mode. Auto prioritizes staged
+// changes because they are what the next commit will contain, and falls back to
+// unstaged changes when the index is clean.
+func GetDiff(mode DiffMode) (string, error) {
+	switch mode {
+	case DiffModeAuto:
+		staged, err := ExecuteCommand("diff", "--cached")
 		if err != nil {
 			return "", err
 		}
-	}
-
-	if gitDiff == "" {
-		gitDiff, err = ExecuteCommand("diff", "--staged")
+		if staged != "" {
+			return staged, nil
+		}
+		return ExecuteCommand("diff")
+	case DiffModeStage:
+		return ExecuteCommand("diff", "--cached")
+	case DiffModeUnstage:
+		return ExecuteCommand("diff")
+	case DiffModeAll:
+		staged, err := ExecuteCommand("diff", "--cached")
 		if err != nil {
 			return "", err
 		}
+		unstaged, err := ExecuteCommand("diff")
+		if err != nil {
+			return "", err
+		}
+		return combineDiffs(staged, unstaged), nil
+	default:
+		return "", fmt.Errorf("invalid changes mode %q: must be one of auto, stage, unstage, all", mode)
 	}
+}
 
-	return gitDiff, nil
+func combineDiffs(staged, unstaged string) string {
+	var sections []string
+	if staged != "" {
+		sections = append(sections, "STAGED CHANGES:\n"+staged)
+	}
+	if unstaged != "" {
+		sections = append(sections, "UNSTAGED CHANGES:\n"+unstaged)
+	}
+	return strings.Join(sections, "\n")
 }
 
 // GetDiffSince получает изменения с определенного коммита до HEAD

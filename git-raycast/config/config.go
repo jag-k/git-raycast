@@ -11,6 +11,7 @@ const (
 	RaycastVersionBeta   = "beta"
 
 	GitConfigRaycastVersion = "git-raycast.raycast-version"
+	GitConfigMessageChanges = "git-raycast.message-changes"
 )
 
 type StringSetting struct {
@@ -46,6 +47,21 @@ func RaycastVersion(flagValue string) (string, error) {
 	}
 
 	return firstNonEmpty(flagValue, os.Getenv("GIT_RAYCAST_VERSION"), gitConfigValue, RaycastVersionStable), nil
+}
+
+// MessageChanges returns the selected commit-message diff mode.
+// Priority: 1. explicitly set flag, 2. git config, 3. auto.
+func MessageChanges(flagValue string, flagChanged bool) (git.DiffMode, error) {
+	if flagChanged {
+		return git.DiffMode(flagValue), nil
+	}
+
+	gitConfigValue, err := git.GetConfig(GitConfigMessageChanges)
+	if err != nil {
+		return "", err
+	}
+
+	return git.DiffMode(firstNonEmpty(gitConfigValue, string(git.DiffModeAuto))), nil
 }
 
 // CommandName returns the configured Raycast command name.

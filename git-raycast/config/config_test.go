@@ -59,6 +59,47 @@ func TestRaycastVersionFlagTakesPriority(t *testing.T) {
 	}
 }
 
+func TestMessageChangesDefault(t *testing.T) {
+	isolateGitConfig(t)
+
+	result, err := MessageChanges("auto", false)
+	if err != nil {
+		t.Fatalf("MessageChanges returned error: %v", err)
+	}
+
+	if result != "auto" {
+		t.Fatalf("MessageChanges() = %q, want %q", result, "auto")
+	}
+}
+
+func TestMessageChangesFromGitConfig(t *testing.T) {
+	isolateGitConfig(t)
+	setGitConfig(t, GitConfigMessageChanges, "all")
+
+	result, err := MessageChanges("auto", false)
+	if err != nil {
+		t.Fatalf("MessageChanges returned error: %v", err)
+	}
+
+	if result != "all" {
+		t.Fatalf("MessageChanges() = %q, want %q", result, "all")
+	}
+}
+
+func TestMessageChangesFlagTakesPriority(t *testing.T) {
+	isolateGitConfig(t)
+	setGitConfig(t, GitConfigMessageChanges, "all")
+
+	result, err := MessageChanges("auto", true)
+	if err != nil {
+		t.Fatalf("MessageChanges returned error: %v", err)
+	}
+
+	if result != "auto" {
+		t.Fatalf("MessageChanges() = %q, want %q", result, "auto")
+	}
+}
+
 func TestCommandNameDefault(t *testing.T) {
 	isolateGitConfig(t)
 

@@ -29,6 +29,31 @@ git raycast
 - [`mr`/`pr` - Generate MR/PR Summary message](https://github.com/jag-k/git-raycast/wiki/Commands#mr-pr-sumary)
 - [`summary` - Create daily summary based on changes since yesterday](https://github.com/jag-k/git-raycast/wiki/Commands#summary)
 
+### Commit message changes
+
+By default, `message` generates a commit message from staged changes. If nothing is staged, it falls back to unstaged changes:
+
+```shell
+git-raycast message
+```
+
+Use `--changes` to select changes explicitly:
+
+```shell
+git-raycast message --changes stage   # staged changes only
+git-raycast message --changes unstage # unstaged changes only
+git-raycast message --changes all     # both, labeled as separate sections
+```
+
+Set the default globally or for the current repository with Git config:
+
+```shell
+git config --global git-raycast.message-changes stage
+git config git-raycast.message-changes all
+```
+
+The `--changes` flag takes priority over Git config, including when explicitly set to `auto`.
+
 ### Raycast version
 
 By default, `git-raycast` opens commands in stable Raycast:
@@ -69,6 +94,7 @@ Command names can also be configured with Git config:
 git config --global git-raycast.message-name git-commit-message
 git config --global git-raycast.summary-name daily-summary
 git config --global git-raycast.mr-pr-summary-name mr-pr-summary
+git config --global git-raycast.message-changes auto
 ```
 
 Omit `--global` to set a value only for the current repository.

@@ -11,6 +11,8 @@ import (
 	"github.com/spf13/cobra"
 )
 
+var messageChanges string
+
 var messageCmd = &cobra.Command{
 	Use:     "message [command-name]",
 	Aliases: []string{"msg"},
@@ -23,6 +25,15 @@ The Raycast AI command name can be customized:
 - By setting git config git-raycast.message-name
 - Default: git-commit-message
 
+Changes can be selected with --changes:
+- auto (default): staged changes, or unstaged changes if nothing is staged
+- stage: staged changes only
+- unstage: unstaged changes only
+- all: both staged and unstaged changes
+
+The default can be configured with git config git-raycast.message-changes.
+An explicitly passed --changes flag takes priority over git config.
+
 Calling this Deep-link:
 > raycast://ai-commands/{command-name}?arguments={diff}
 > raycast-x://extensions/raycast/ai/{command-name}?arguments={"diff":"{diff}"} (with --raycast-version beta)
@@ -32,11 +43,17 @@ More info here: https://github.com/jag-k/git-raycast/wiki/Commands#message`,
 }
 
 func init() {
+	messageCmd.Flags().StringVar(&messageChanges, "changes", string(git.DiffModeAuto), "Changes to include: auto, stage, unstage, or all")
 	rootCmd.AddCommand(messageCmd)
 }
 
 func runMessage(cmd *cobra.Command, args []string) error {
-	gitDiff, err := git.GetDiff()
+	changesMode, err := config.MessageChanges(messageChanges, cmd.Flags().Changed("changes"))
+	if err != nil {
+		return err
+	}
+
+	gitDiff, err := git.GetDiff(changesMode)
 	if err != nil {
 		return err
 	}
