@@ -50,9 +50,7 @@ homebrew_casks:
     binaries:
       - git-raycast
     generate_completions_from_executable:
-      executable: "bin/git-raycast"
-      args:
-        - completion
+      executable: "git-raycast"
       base_name: "git-raycast"
       shell_parameter_format: cobra
       shells:
